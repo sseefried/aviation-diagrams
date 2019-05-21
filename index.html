@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<script type="text/javascript" src="jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="raphael.min.js"></script>
+<style>
+
+.col-left {
+    float: left;
+    width: 10%;
+}
+
+.col-right {
+    float: left;
+    width: 40%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+</style>
+
+</head>
+<body>
+
+
+<div class="row">
+  <div class="col-left">
+    <label>Track:</label>
+  </div>
+  <div class="col-right">
+    <input type="text" id="track" name="track" value="30"/>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-left">
+    <label>TAS</label>
+  </div>
+  <div class="col-right">
+    <input type="text" id="TAS" name="TAS" value="350"/>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-left">
+    <label>Wind from:</label>
+  </div>
+  <div class="col-right">
+    <input type="text" id="wind-from" name="wind-from" value="270" />
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-left">
+    <label>Wind speed:</label>
+  </div>
+  <div class="col-right">
+    <input type="text" id="wind-speed" name="wind-speed" value="160"/>
+  </div>
+</div>
+
+
+<div id="canvas" style="height: 100%; width: 100%;"></div>
+
+
+<script type="text/javascript">
+
+var toRadians = function(degrees) {
+  return (degrees/180.0)*Math.PI;
+};
+
+var fromRadians = function(rad) {
+  return (rad/Math.PI)*180.0;
+};
+
+var dsin = function(degrees) {
+  return Math.sin(toRadians(degrees));
+};
+
+var dcos = function(degrees) {
+  return Math.cos(toRadians(degrees));
+};
+
+var dasin = function(ratio) {
+  return fromRadians(Math.asin(ratio));
+};
+
+var normalise = function(degrees) {
+  if (degrees > 360) {
+    while (degrees > 360) { degrees -= 360; }
+  } else if (degrees < 0) {
+    while (degrees < 0) {degrees += 360;}
+  }
+  return degrees;
+};
+
+// global variables
+var r;
+var track = 30,
+    wind  = 160,
+    from  = 270,
+    TAS   = 350;
+
+
+var minimum = function(zero, as) {
+  var i;
+  var result = zero;
+  for (i = 0; i < as.length; i++) {
+    result = Math.min(result, as[i]);
+  }
+  return result;
+}
+
+var drawDiagram = function() {
+    var windDir = normalise(from - 180);
+
+    var tailWind = wind * dcos(windDir - track);
+    var crossWind = wind * dsin(windDir - track);
+    var driftAngle = dasin(crossWind/TAS);
+    var ETAS = TAS*dcos(Math.abs(driftAngle));
+    var heading = track - driftAngle;
+    var groundSpeed = TAS*dcos(driftAngle) + tailWind;
+    var heading;
+
+    var rnd = function(v) {
+      return Number(v.toFixed(2));
+    };
+
+    console.log("==========================");
+    console.log("track", rnd(track));
+    console.log("wind-from", rnd(from));
+    console.log("wind-speed", rnd(wind));
+    console.log("TAS", rnd(TAS));
+
+    console.log("--- results ------");
+    console.log("tailWind", rnd(tailWind));
+    console.log("crossWind", rnd(crossWind));
+
+    console.log("driftAngle", rnd(driftAngle));
+    console.log("ETAS", rnd(ETAS));
+    console.log("groundSpeed", rnd(groundSpeed));
+    console.log("heading", rnd(heading));
+
+    var tasEndX = rnd(TAS*dcos(heading));
+    var tasEndY = rnd(TAS*dsin(heading));
+
+    var windEndX = rnd(tasEndX + wind*dcos(windDir));
+    var windEndY = rnd(tasEndY + wind*dsin(windDir));
+
+    var trackEndX = rnd(groundSpeed*dcos(track));
+    var trackEndY = rnd(groundSpeed*dsin(track));
+
+    var topLeftX = minimum(0, [tasEndX, windEndX, trackEndX]);
+    var topLeftY = minimum(0, [tasEndY, windEndY, trackEndY]);
+
+    var tstr = "t"+(-topLeftX)+","+(-topLeftY)+"s1,-1...s1,-1";
+    var attrs = { "stroke-width": "2", "arrow-end": "classic-wide-long"};
+
+    r.clear();
+    r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red", }).transform(tstr);
+    r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}).transform(tstr);
+    r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs).transform(tstr);
+
+};
+
+var watch = function(id, initValue, setter) {
+  var el = $('#' + id);
+  el.val(initValue.toString()); // clear
+  setter(initValue);
+  el.keyup(function() {
+    var value = $("#" + id ).val();
+    setter(parseFloat(value));
+    drawDiagram();
+  });
+};
+
+$(document).ready(function() {
+    var canvas = $("#canvas");
+    var w = canvas.width(), h = canvas.height();
+
+    r = Raphael("canvas", w, h);
+    drawDiagram();
+
+    watch("track", 30, function(v) { track = v; });
+    watch("wind-from", 270, function(v) { from = v; });
+    watch("TAS", 350, function(v) { TAS = v; });
+    watch("wind-speed", 160, function(v) { wind = v; });
+
+    drawDiagram();
+
+
+});
+</script>
+
+
+
+</body>
+</html>
