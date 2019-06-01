@@ -162,9 +162,12 @@ var drawDiagram = function() {
     var attrs = { "stroke-width": "2", "arrow-end": "classic-wide-long"};
 
     r.clear();
-    r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red", }).transform(tstr);
-    r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}).transform(tstr);
-    r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs).transform(tstr);
+    var set = r.set();
+    set.push(
+      r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red", }),
+      r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}),
+      r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs)
+    ).transform(tstr);
 
 };
 
