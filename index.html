@@ -153,8 +153,6 @@ var drawDiagram = function() {
 
     console.log("driftAngle", rnd(driftAngle));
     console.log("ETAS", rnd(ETAS));
-    console.log("groundSpeed", rnd(groundSpeed));
-    console.log("heading", rnd(heading));
 
     var tasEndY = rnd(TAS*dcos(heading));
     var tasEndX = rnd(TAS*dsin(heading));
@@ -173,6 +171,9 @@ var drawDiagram = function() {
     console.log("trackEnd = ", trackEndX, trackEndY);
     console.log("topLeft =", topLeftX, topLeftY);
 
+    console.log("=================");
+    console.log("Fly at heading", rnd(heading), "at", rnd(TAS), "knots to achieve a track of", rnd(track), "degrees with ground speed", rnd(groundSpeed), "knots.");
+
     var attrs = { "stroke-width": "2", "arrow-end": "classic-wide-long"};
 
     r.clear();
@@ -189,8 +190,15 @@ var drawDiagram = function() {
     group.add(r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs));
     group.add(r.path("M" + tasEndX + "," + tasEndY + "L" + wind))
 
-    var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr({"stroke": "blue", "stroke-dasharray": "2 2" }).marker('end', 5,5, arrow("blue"));
+    var compAttrs = {"stroke": "blue", "stroke-dasharray": "2 2" };
+
+    var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr(compAttrs).marker('end', 5,5, arrow("blue"));
     group.add(crossWindLine);
+
+    if (tailWind < 0) {
+      var tailWindLine = r.path("M0 0L" + "0 " + tailWind ).rotate(180-track).translate(windEndX, windEndY).attr(compAttrs);
+      group.add(tailWindLine);
+    }
 
     // var tailWindLine = r.path("M0 0L0 " + tailWind).rotate(-track).translate(0,0).attr(attrs).attr({"stroke": "blue", "stroke-dasharray": "2 2" }).marker('end', 5,5, arrow("blue"));
 
