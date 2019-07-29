@@ -2,7 +2,7 @@
 <html>
 <head>
 <script type="text/javascript" src="jquery-3.4.1.min.js"></script>
-<script type="text/javascript" src="raphael.min.js"></script>
+<script type="text/javascript" src="svg.min.js"></script>
 <style>
 
 .col-left {
@@ -116,6 +116,16 @@ var minimum = function(zero, as) {
   return result;
 }
 
+var maximum = function(zero, as) {
+  var i;
+  var result = zero;
+  for (i = 0; i < as.length; i++) {
+    result = Math.max(result, as[i]);
+  }
+  return result;
+}
+
+
 var drawDiagram = function() {
     var windDir = normalise(from - 180);
 
@@ -146,28 +156,49 @@ var drawDiagram = function() {
     console.log("groundSpeed", rnd(groundSpeed));
     console.log("heading", rnd(heading));
 
-    var tasEndX = rnd(TAS*dcos(heading));
-    var tasEndY = rnd(TAS*dsin(heading));
+    var tasEndY = rnd(TAS*dcos(heading));
+    var tasEndX = rnd(TAS*dsin(heading));
 
-    var windEndX = rnd(tasEndX + wind*dcos(windDir));
-    var windEndY = rnd(tasEndY + wind*dsin(windDir));
+    var windEndY = rnd(tasEndY + wind*dcos(windDir));
+    var windEndX = rnd(tasEndX + wind*dsin(windDir));
 
-    var trackEndX = rnd(groundSpeed*dcos(track));
-    var trackEndY = rnd(groundSpeed*dsin(track));
+    var trackEndY = rnd(groundSpeed*dcos(track));
+    var trackEndX = rnd(groundSpeed*dsin(track));
 
     var topLeftX = minimum(0, [tasEndX, windEndX, trackEndX]);
     var topLeftY = minimum(0, [tasEndY, windEndY, trackEndY]);
 
-    var tstr = "t"+(-topLeftX)+","+(-topLeftY)+"s1,-1...s1,-1";
+    console.log("tasEnd = ",tasEndX, tasEndY);
+    console.log("windEnd = ", windEndX, windEndY);
+    console.log("trackEnd = ", trackEndX, trackEndY);
+    console.log("topLeft =", topLeftX, topLeftY);
+
     var attrs = { "stroke-width": "2", "arrow-end": "classic-wide-long"};
 
     r.clear();
-    var set = r.set();
-    set.push(
-      r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red", }),
-      r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}),
-      r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs)
-    ).transform(tstr);
+    var group = r.group();
+
+    var arrow = function(color) {
+      return function(add) {
+        add.circle(5,5).fill(color);
+      };
+    };
+
+    group.add(r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red" }).marker('end', 5,5, arrow("red")));
+    group.add(r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}).marker('end', 5,5, arrow("blue")));
+    group.add(r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs));
+    group.add(r.path("M" + tasEndX + "," + tasEndY + "L" + wind))
+
+    var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr({"stroke": "blue", "stroke-dasharray": "2 2" }).marker('end', 5,5, arrow("blue"));
+    group.add(crossWindLine);
+
+    // var tailWindLine = r.path("M0 0L0 " + tailWind).rotate(-track).translate(0,0).attr(attrs).attr({"stroke": "blue", "stroke-dasharray": "2 2" }).marker('end', 5,5, arrow("blue"));
+
+//    group.add(tailWindLine);
+    group.translate(-topLeftX+5,-topLeftY+5);
+    group.scale(1,-1);
+
+
 
 };
 
@@ -186,8 +217,7 @@ $(document).ready(function() {
     var canvas = $("#canvas");
     var w = canvas.width(), h = canvas.height();
 
-    r = Raphael("canvas", w, h);
-    drawDiagram();
+    r = SVG("canvas").viewbox(0,0,w,h);
 
     watch("track", 30, function(v) { track = v; });
     watch("wind-from", 270, function(v) { from = v; });
