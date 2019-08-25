@@ -102,8 +102,7 @@
 <br/>
 <br/>
 
-<div id="canvas" style="height: 100%; width: 100%;"></div>
-
+<div id="canvas" style="height: 100%; width: 100%; border: 1px solid black"></div>
 
 <script type="text/javascript">
 
@@ -217,28 +216,28 @@ var drawDiagram = function() {
 
         pg =  group.group(); // subgroup of group
         pg.path(planePath);
-        pg.move(-329,-14); // FIXME: Broken. Only works for initial values
-        pg.dmove(0,-boundingBox.h);
-        pg.dmove(dx,dy);
-        pg.rotate(90);
-        pg.scale(0.1,0.1);
-        pg.transform({rotation: -heading}, true);
 
+        // FIXME: I have no idea why these magic numbers work!
+        pg.dmove(-329,tasEndY-363);
+        pg.dmove(0,-tasEndY);
+        pg.dmove(dx,dy);
+        pg.scale(0.1,0.1);
+        pg.transform({rotation: 90-heading}, true);
         group.add(pg);
     };
 
-    console.log("==========================");
-    console.log("track", rnd(track));
-    console.log("wind-from", rnd(from));
-    console.log("wind-speed", rnd(wind));
-    console.log("TAS", rnd(TAS));
+    // console.log("==========================");
+    // console.log("track", rnd(track));
+    // console.log("wind-from", rnd(from));
+    // console.log("wind-speed", rnd(wind));
+    // console.log("TAS", rnd(TAS));
 
-    console.log("--- results ------");
-    console.log("tailWind", rnd(tailWind));
-    console.log("crossWind", rnd(crossWind));
+    // console.log("--- results ------");
+    // console.log("tailWind", rnd(tailWind));
+    // console.log("crossWind", rnd(crossWind));
 
-    console.log("driftAngle", rnd(driftAngle));
-    console.log("ETAS", rnd(ETAS));
+    // console.log("driftAngle", rnd(driftAngle));
+    // console.log("ETAS", rnd(ETAS));
 
     var tasEndY = rnd(TAS*dcos(heading));
     var tasEndX = rnd(TAS*dsin(heading));
@@ -253,18 +252,13 @@ var drawDiagram = function() {
     var bottomLeftY = minimum(0, [tasEndY, windEndY, trackEndY]);
 
 
-    // Bounding box for the diagram sans plane
-    var boundingBox = { w: tasEndX - bottomLeftX
-                      , h: tasEndY - bottomLeftY
-                      };
+    // console.log("tasEnd = ",tasEndX, tasEndY);
+    // console.log("windEnd = ", windEndX, windEndY);
+    // console.log("trackEnd = ", trackEndX, trackEndY);
+    // console.log("bottomLeft =", bottomLeftX, bottomLeftY);
 
-    console.log("tasEnd = ",tasEndX, tasEndY);
-    console.log("windEnd = ", windEndX, windEndY);
-    console.log("trackEnd = ", trackEndX, trackEndY);
-    console.log("bottomLeft =", bottomLeftX, bottomLeftY);
-
-    console.log("=================");
-    console.log("Fly at heading", rnd(heading), "at", rnd(TAS), "knots to achieve a track of", rnd(track), "degrees with ground speed", rnd(groundSpeed), "knots.");
+    // console.log("=================");
+    // console.log("Fly at heading", rnd(heading), "at", rnd(TAS), "knots to achieve a track of", rnd(track), "degrees with ground speed", rnd(groundSpeed), "knots.");
 
     var attrs = { "stroke-width": "2", "arrow-end": "classic-wide-long"};
 
@@ -284,21 +278,23 @@ var drawDiagram = function() {
 
     var compAttrs = {"stroke": "blue", "stroke-dasharray": "2 2" };
 
-    var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr(compAttrs).marker('end', 5,5, arrow("blue"));
-    group.add(crossWindLine);
+   var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr(compAttrs).marker('end', 5,5, arrow("blue"));
+   group.add(crossWindLine);
 
-    if (tailWind < 0) {
-      var tailWindLine = r.path("M0 0L" + "0 " + tailWind ).rotate(180-track).translate(windEndX, windEndY).attr(compAttrs);
-      group.add(tailWindLine);
-    }
+   if (tailWind < 0) {
+     var tailWindLine = r.path("M0 0L" + "0 " + tailWind ).rotate(180-track).translate(windEndX, windEndY).attr(compAttrs);
+     group.add(tailWindLine);
+   }
 
-    group.translate(-bottomLeftX+(width/2 - boundingBox.w/2),-bottomLeftY+(height/2 - boundingBox.h/2));
-    group.scale(1,-1);
+  $('#ground-speed').html(rnd(groundSpeed) + " knots");
+  $('#heading').html(rnd(normalise(heading)) + "°");
 
-    $('#ground-speed').html(rnd(groundSpeed) + " knots");
-    $('#heading').html(rnd(normalise(heading)) + "°");
+  var boundingBox = group.rbox();
 
-    drawPlane(group, track, boundingBox);
+  group.translate(-bottomLeftX+(width/2 - boundingBox.w/2),-bottomLeftY+(height/2 - boundingBox.h/2));
+  group.scale(1,-1);
+
+  drawPlane(group);
 
 };
 
@@ -338,13 +334,14 @@ var setInitValue = function(id, value) {
 
 $(document).ready(function() {
     var canvas = $("#canvas");
-    var w = canvas.width(), h = canvas.height();
 
+    canvas.height(canvas.height() - canvas[0].offsetTop);
+    var w = canvas.width(), h = canvas.height();
     r = SVG("canvas").viewbox(0,0,w,h);
 
     setInitValue("track", 30);
     setInitValue("wind-from", 270);
-    setInitValue("TAS", 350);
+    setInitValue("TAS", 200);
     setInitValue("wind-speed", 160);
     width = w;
     height = h;
