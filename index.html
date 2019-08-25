@@ -217,7 +217,7 @@ var drawDiagram = function() {
 
         pg =  group.group(); // subgroup of group
         pg.path(planePath);
-        pg.move(-329,-14);
+        pg.move(-329,-14); // FIXME: Broken. Only works for initial values
         pg.dmove(0,-boundingBox.h);
         pg.dmove(dx,dy);
         pg.rotate(90);
