@@ -198,7 +198,7 @@ var rnd = function(v) {
 var linePlusText = function(r,x,y,len,ang,txt,f) {
   var line = r.group();
   line.add(f(r.path("M0 0L" + len +  " 0")));
-  var textObj = line.text(txt).font({size: 10});
+  var textObj = line.text(txt).font({size: "8pt"});
   var nang = normalise(ang);
 
   var condition = nang >= 270 || nang <= 90;
@@ -319,7 +319,7 @@ var drawDiagram = function() {
     var scaleFactor = Math.min(width/boundingBox.w, height/boundingBox.h)*0.85;
     group.scale(scaleFactor);
 
-    // IMPORTANT: Scale before drawing the plane or else the during the animation
+      // IMPORTANT: Scale before drawing the plane or else the during the animation
     // the diagrams moves because the plane is considered part of the bounding
     // box
     drawPlane(group);
