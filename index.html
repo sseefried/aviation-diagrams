@@ -319,9 +319,10 @@ var drawDiagram = function() {
     var scaleFactor = Math.min(width/boundingBox.w, height/boundingBox.h)*0.85;
     group.scale(scaleFactor);
 
+    // IMPORTANT: Scale before drawing the plane or else the during the animation
+    // the diagrams moves because the plane is considered part of the bounding
+    // box
     drawPlane(group);
-
-
 };
 
 var calculate = function() {
