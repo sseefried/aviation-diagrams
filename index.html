@@ -49,7 +49,7 @@
 
 <div class="row">
   <div class="col-left">
-    <label>Wind from:</label>
+    <label>Wind(W) from:</label>
   </div>
   <div class="col-right">
     <input type="text" id="wind-from" name="wind-from" value="270" />
@@ -58,7 +58,7 @@
 
 <div class="row">
   <div class="col-left">
-    <label>Wind speed:</label>
+    <label>Wind(W) speed:</label>
   </div>
   <div class="col-right">
     <input type="text" id="wind-speed" name="wind-speed" value="160"/>
@@ -67,7 +67,7 @@
 
 <div class="row">
   <div class="col-left">
-    <label>Ground Speed:</label>
+    <label>Ground Speed(GS):</label>
   </div>
   <div class="col-right">
     <div id="ground-speed" name="ground-speed" value="160"></div>
@@ -191,6 +191,29 @@ var maximum = function(zero, as) {
   return result;
 }
 
+var rnd = function(v) {
+  return Number(v.toFixed(2));
+};
+
+var linePlusText = function(r,x,y,len,ang,txt,f) {
+  var line = r.group();
+  line.add(f(r.path("M0 0L" + len +  " 0")));
+  var textObj = line.text(txt).font({size: 10});
+  var nang = normalise(ang);
+
+  console.log(txt, nang);
+  var condition = nang >= 270 || nang <= 90;
+  var scaleX = condition ? 1 : -1;
+      scaleY = condition ? -1: 1;
+
+  textObj.scale(scaleX,scaleY).translate((len - scaleX*textObj.bbox().width)/2);
+  line.rotate(ang).translate(x,y);
+  r.add(line);
+};
+
+var toKnots = function(title, value) {
+  return title + " = " + rnd(Math.abs(value)) + " kts";
+};
 
 var drawDiagram = function() {
     var windDir = normalise(from - 180);
@@ -203,9 +226,6 @@ var drawDiagram = function() {
     var groundSpeed = TAS*dcos(driftAngle) + tailWind;
     var heading;
 
-    var rnd = function(v) {
-      return Number(v.toFixed(2));
-    };
 
     var drawPlane = function(group) {
         var dx, dy, frac = animateTime/maxAnimateTime;
@@ -226,18 +246,18 @@ var drawDiagram = function() {
         group.add(pg);
     };
 
-    // console.log("==========================");
-    // console.log("track", rnd(track));
-    // console.log("wind-from", rnd(from));
-    // console.log("wind-speed", rnd(wind));
-    // console.log("TAS", rnd(TAS));
+    console.log("==========================");
+    console.log("track", rnd(track));
+    console.log("wind-from", rnd(from));
+    console.log("wind-speed", rnd(wind));
+    console.log("TAS", rnd(TAS));
 
-    // console.log("--- results ------");
-    // console.log("tailWind", rnd(tailWind));
-    // console.log("crossWind", rnd(crossWind));
+    console.log("--- results ------");
+    console.log("tailWind", rnd(tailWind));
+    console.log("crossWind", rnd(crossWind));
 
-    // console.log("driftAngle", rnd(driftAngle));
-    // console.log("ETAS", rnd(ETAS));
+    console.log("driftAngle", rnd(driftAngle));
+    console.log("ETAS", rnd(ETAS));
 
     var tasEndY = rnd(TAS*dcos(heading));
     var tasEndX = rnd(TAS*dsin(heading));
@@ -264,6 +284,8 @@ var drawDiagram = function() {
 
     r.clear();
     var group = r.group();
+    group.scale(1,-1); // flip y axis
+    group.translate(width/2, height/2); // origin in centre of screen.
 
     var arrow = function(color) {
       return function(add) {
@@ -271,30 +293,35 @@ var drawDiagram = function() {
       };
     };
 
-    group.add(r.path("M0 0L" + tasEndX.toString() + " " + tasEndY.toString()).attr(attrs).attr({ "stroke": "red" }).marker('end', 5,5, arrow("red")));
-    group.add(r.path("M" + tasEndX + "," + tasEndY +  "L" + windEndX.toString() + "," + windEndY.toString()).attr(attrs).attr({ "stroke": "blue"}).marker('end', 5,5, arrow("blue")));
-    group.add(r.path("M0,0L" + trackEndX.toString() + "," + trackEndY.toString()).attr(attrs));
-    group.add(r.path("M" + tasEndX + "," + tasEndY + "L" + wind))
-
     var compAttrs = {"stroke": "blue", "stroke-dasharray": "2 2" };
 
-   var crossWindLine = r.path("M0 0L" + crossWind +  " 0").rotate(-track).translate(tasEndX,tasEndY).attr(attrs).attr(compAttrs).marker('end', 5,5, arrow("blue"));
-   group.add(crossWindLine);
+    linePlusText(group, 0, 0, TAS, 90-heading, toKnots("TAS", TAS),
+      function(x) { return x.attr(attrs).attr({ "stroke": "red" }).marker('end', 5,5, arrow("red")); });
 
-   if (tailWind < 0) {
-     var tailWindLine = r.path("M0 0L" + "0 " + tailWind ).rotate(180-track).translate(windEndX, windEndY).attr(compAttrs);
-     group.add(tailWindLine);
-   }
+    linePlusText(group, tasEndX, tasEndY, wind, 270-from, toKnots("W", wind),
+      function(x) { return x.attr(attrs).attr({ "stroke": "blue"}).marker('end', 5,5, arrow("blue")) });
 
-  $('#ground-speed').html(rnd(groundSpeed) + " knots");
-  $('#heading').html(rnd(normalise(heading)) + "°");
+    linePlusText(group, 0, 0, groundSpeed, 90-track, toKnots("GS", groundSpeed), function(x) { return x.attr(attrs); });
 
-  var boundingBox = group.rbox();
+    linePlusText(group, tasEndX, tasEndY, crossWind, -track, toKnots("CW", crossWind),
+      function(x) { return x.attr(attrs).attr(compAttrs).marker('end', 5,5, arrow("blue")); });
 
-  group.translate(-bottomLeftX+(width/2 - boundingBox.w/2),-bottomLeftY+(height/2 - boundingBox.h/2));
-  group.scale(1,-1);
+    if (tailWind < 0) {
+      linePlusText(group, windEndX, windEndY, tailWind, 270 - track, toKnots("TW", tailWind), function(x) { return x.attr(compAttrs); })
+      // var tailWindLine = r.path("M0 0L" + "0 " + tailWind ).rotate(180-track).translate(windEndX, windEndY).attr(compAttrs);
+      // group.add(tailWindLine);
+    }
 
-  drawPlane(group);
+    $('#ground-speed').html(rnd(groundSpeed) + " knots");
+    $('#heading').html(rnd(normalise(heading)) + "°");
+
+    var boundingBox = group.bbox();
+    group.dmove(-boundingBox.w/2, -boundingBox.h/2);
+
+    drawPlane(group);
+
+    var scaleFactor = Math.min(width/boundingBox.w, height/boundingBox.h)*0.85;
+    group.scale(scaleFactor);
 
 };
 
@@ -340,8 +367,8 @@ $(document).ready(function() {
     r = SVG("canvas").viewbox(0,0,w,h);
 
     setInitValue("track", 30);
-    setInitValue("wind-from", 270);
-    setInitValue("TAS", 200);
+    setInitValue("wind-from", 80 /*270*/);
+    setInitValue("TAS", 350);
     setInitValue("wind-speed", 160);
     width = w;
     height = h;
