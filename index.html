@@ -201,7 +201,6 @@ var linePlusText = function(r,x,y,len,ang,txt,f) {
   var textObj = line.text(txt).font({size: 10});
   var nang = normalise(ang);
 
-  console.log(txt, nang);
   var condition = nang >= 270 || nang <= 90;
   var scaleX = condition ? 1 : -1;
       scaleY = condition ? -1: 1;
@@ -246,18 +245,18 @@ var drawDiagram = function() {
         group.add(pg);
     };
 
-    console.log("==========================");
-    console.log("track", rnd(track));
-    console.log("wind-from", rnd(from));
-    console.log("wind-speed", rnd(wind));
-    console.log("TAS", rnd(TAS));
+    // console.log("==========================");
+    // console.log("track", rnd(track));
+    // console.log("wind-from", rnd(from));
+    // console.log("wind-speed", rnd(wind));
+    // console.log("TAS", rnd(TAS));
 
-    console.log("--- results ------");
-    console.log("tailWind", rnd(tailWind));
-    console.log("crossWind", rnd(crossWind));
+    // console.log("--- results ------");
+    // console.log("tailWind", rnd(tailWind));
+    // console.log("crossWind", rnd(crossWind));
 
-    console.log("driftAngle", rnd(driftAngle));
-    console.log("ETAS", rnd(ETAS));
+    // console.log("driftAngle", rnd(driftAngle));
+    // console.log("ETAS", rnd(ETAS));
 
     var tasEndY = rnd(TAS*dcos(heading));
     var tasEndX = rnd(TAS*dsin(heading));
@@ -317,11 +316,11 @@ var drawDiagram = function() {
 
     var boundingBox = group.bbox();
     group.dmove(-boundingBox.w/2, -boundingBox.h/2);
+    var scaleFactor = Math.min(width/boundingBox.w, height/boundingBox.h)*0.85;
+    group.scale(scaleFactor);
 
     drawPlane(group);
 
-    var scaleFactor = Math.min(width/boundingBox.w, height/boundingBox.h)*0.85;
-    group.scale(scaleFactor);
 
 };
 
